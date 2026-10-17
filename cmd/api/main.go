@@ -29,6 +29,24 @@ func main() {
 	if err != nil {
 		log.Fatal("Не удалось подключиться к базе!")
 	}
+
+	_, err = db.ExecContext(ctx, `
+		CREATE TABLE IF NOT EXISTS contacts (
+			id          SERIAL PRIMARY KEY,
+			name        TEXT NOT NULL,
+			surname     TEXT,
+			second_name TEXT
+		);
+		CREATE TABLE IF NOT EXISTS numbers (
+			id         SERIAL PRIMARY KEY,
+			number     TEXT NOT NULL,
+			contact_id INT REFERENCES contacts(id) ON DELETE CASCADE
+		);
+	`)
+	if err != nil {
+		log.Fatalf("Не удалось выполнить миграцию: %v", err)
+	}
+
 	store := postgres.New(db)
 
 	port := os.Getenv("PORT")
