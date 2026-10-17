@@ -22,15 +22,16 @@ func main() {
 	}
 	defer db.Close()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	err = db.PingContext(ctx)
-	cancel()
+	PingCtx, PingCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	err = db.PingContext(PingCtx)
+	PingCancel()
 
 	if err != nil {
 		log.Fatal("Не удалось подключиться к базе!")
 	}
 
-	_, err = db.ExecContext(ctx, `
+	migCtx, migCancel := context.WithTimeout(context.Background(), 15*time.Second)
+	_, err = db.ExecContext(migCtx, `
 		CREATE TABLE IF NOT EXISTS contacts (
 			id          SERIAL PRIMARY KEY,
 			name        TEXT NOT NULL,
@@ -43,6 +44,7 @@ func main() {
 			contact_id INT REFERENCES contacts(id) ON DELETE CASCADE
 		);
 	`)
+	migCancel()
 	if err != nil {
 		log.Fatalf("Не удалось выполнить миграцию: %v", err)
 	}
